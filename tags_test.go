@@ -77,19 +77,6 @@ type IFaceStruct struct {
 	Xport2 FlatIFaceStruct
 }
 
-var mapTestCases = []MapTestCase{
-	{"Void", maker{}, new(VoidStruct), `{}`},
-	{"Flat", maker{}, new(FlatStruct), `{"Xport":0}`},
-	// Bug for final zero-size field, see https://github.com/golang/go/issues/18016
-	// {"AnonymousVoidStruct", maker{}, new(AnonymousVoidStruct), `{"Xport":0}`},
-	{"Struct", maker{}, new(Struct), `{"Xport1":0,"Xport2":{"Xport":0}}`},
-	{"Ptr", maker{}, new(PtrStruct), `{"Xport1":0,"Xport2":null}`},
-	{"Slice", maker{}, new(SliceStruct), `{"XportSlice":null,"XportArray":[{"Xport":0},{"Xport":0}]}`},
-	{"Map", maker{}, &MapStruct{XportMap: map[string]*FlatStruct{"A": {Xport: 1}, "B": {Xport: 2}}},
-		`{"XportMap":{"A":{"Xport":1},"B":{"Xport":2}}}`},
-	{"UnchangedUnexported", maker{}, new(PrivateFieldsStruct), `{"XportTime":"0001-01-01T00:00:00Z"}`},
-}
-
 var mapTestCasesAny = []MapTestCase{
 	{"FlatIFace", maker{}, new(FlatIFaceStruct), `{"Xport":0}`},
 	{"IFace", maker{}, new(IFaceStruct), `{"Xport1":0,"Xport2":{"Xport":0}}`},
@@ -124,7 +111,26 @@ func (c *MapTestCase) checkResult(result interface{}, test *testing.T) {
 }
 
 func TestConvert(test *testing.T) {
-	for _, testCase := range mapTestCases {
+	var testCases = []MapTestCase{
+		{"Void", maker{}, new(VoidStruct), `{}`},
+		{"Flat", maker{}, new(FlatStruct), `{"Xport":0}`},
+		// Bug for final zero-size field, see https://github.com/golang/go/issues/18016
+		// {"AnonymousVoidStruct", maker{}, new(AnonymousVoidStruct), `{"Xport":0}`},
+		{"Struct", maker{}, new(Struct), `{"Xport1":0,"Xport2":{"Xport":0}}`},
+		{"PtrStruct", maker{}, new(PtrStruct), `{"Xport1":0,"Xport2":null}`},
+		{"SliceStruct", maker{}, new(SliceStruct), `{"XportSlice":null,"XportArray":[{"Xport":0},{"Xport":0}]}`},
+		{"MapStruct", maker{}, &MapStruct{XportMap: map[string]*FlatStruct{"A": {Xport: 1}, "B": {Xport: 2}}},
+			`{"XportMap":{"A":{"Xport":1},"B":{"Xport":2}}}`},
+		{"UnchangedUnexported", maker{}, new(PrivateFieldsStruct), `{"XportTime":"0001-01-01T00:00:00Z"}`},
+
+		{"Array", maker{}, &[2]FlatStruct{{0, 0}, {1, 1}}, `[{"Xport":0},{"Xport":1}]`},
+		{"Slice", maker{}, &[]FlatStruct{{0, 0}, {1, 1}}, `[{"Xport":0},{"Xport":1}]`},
+		{"MapStruct", maker{}, &map[string]*FlatStruct{"A": {Xport: 1}, "B": {Xport: 2}},
+			`{"A":{"Xport":1},"B":{"Xport":2}}`},
+		{"NotPointer/Slice", maker{}, []FlatStruct{{1, 1}, {2, 2}}, `[{"Xport":1},{"Xport":2}]`},
+	}
+
+	for _, testCase := range testCases {
 		test.Run(testCase.Name, testCase.Run)
 	}
 	test.Run("Unsupported", func(test *testing.T) {

@@ -64,12 +64,23 @@ func ConvertAny(p interface{}, maker TagMaker) interface{} {
 
 func convert(p interface{}, maker TagMaker, any bool) interface{} {
 	strPtrVal := reflect.ValueOf(p)
-	if strPtrVal.Kind() != reflect.Pointer {
+	switch strPtrVal.Kind() {
+	case reflect.Pointer:
+		res := getType(strPtrVal.Type().Elem(), maker, any)
+		return reflect.NewAt(res.t, unsafe.Pointer(strPtrVal.Pointer())).Interface()
+	case reflect.Slice:
+		res := getType(strPtrVal.Type(), maker, any)
+		newPtrVal := reflect.New(res.t)
+
+		sh := (*reflect.SliceHeader)(unsafe.Pointer(newPtrVal.Pointer()))
+		sh.Data = strPtrVal.Pointer()
+		sh.Len = strPtrVal.Len()
+		sh.Cap = strPtrVal.Len()
+
+		return newPtrVal.Interface()
+	default:
 		panic(fmt.Sprintf("unsupported value type %T", p))
 	}
-	res := getType(strPtrVal.Type().Elem(), maker, any)
-	newPtrVal := reflect.NewAt(res.t, unsafe.Pointer(strPtrVal.Pointer()))
-	return newPtrVal.Interface()
 }
 
 type cacheKey struct {
