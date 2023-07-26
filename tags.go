@@ -64,7 +64,9 @@ func ConvertAny(p interface{}, maker TagMaker) interface{} {
 
 func convert(p interface{}, maker TagMaker, any bool) interface{} {
 	strPtrVal := reflect.ValueOf(p)
-	// TODO(yar): check type (pointer to the structure)
+	if strPtrVal.Kind() != reflect.Pointer {
+		panic(fmt.Sprintf("unsupported value type %T", p))
+	}
 	res := getType(strPtrVal.Type().Elem(), maker, any)
 	newPtrVal := reflect.NewAt(res.t, unsafe.Pointer(strPtrVal.Pointer()))
 	return newPtrVal.Interface()
