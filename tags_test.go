@@ -29,6 +29,7 @@ type FlatStruct struct {
 	Xport int
 }
 
+// AnonymousVoidStruct is used at test for final zero-size field bug
 type AnonymousVoidStruct struct {
 	Xport int
 	Xvoid VoidStruct
@@ -246,13 +247,6 @@ func _TestSizeOf(test *testing.T) {
 		{Name: "A", Type: reflect.TypeOf(int32(0))},
 	})
 }
-
-// func TestX(test *testing.T) {
-// 	reflect.StructOf([]reflect.StructField{
-// 		{Name: "a", Type: reflect.TypeOf("")},
-// 		{Name: "b", Type: reflect.TypeOf("")},
-// 	})
-// }
 
 func Example_viewOfData() {
 	type UserProfile struct {
