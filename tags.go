@@ -28,7 +28,13 @@ type TagMaker interface {
 //     which should be replaced with its own analogue or if it is structure.
 //   - A type of private fields of structures is not modified.
 //
-// Convert panics if argument p has a type different from a pointer to structure.
+// Convert panics if argument p has a type different from:
+//   - slice;
+//   - pointer to structure;
+//   - pointer to slice;
+//   - pointer to map;
+//   - pointer to array.
+//
 // The maker's underlying type should be comparable. In different case panic occurs.
 //
 // Convert panics if the maker attempts to change a field tag of a structure with unexported fields
@@ -78,9 +84,8 @@ func convert(p interface{}, maker TagMaker, any bool) interface{} {
 		sh.Cap = strPtrVal.Len()
 
 		return newPtrVal.Interface()
-	default:
-		panic(fmt.Sprintf("unsupported value type %T", p))
 	}
+	panic(fmt.Sprintf("unsupported value type %T", p))
 }
 
 type cacheKey struct {
